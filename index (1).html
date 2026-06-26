@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>韓国語フラッシュカード</title>
+  <meta name="description" content="日本語・英語・韓国語を同時に学べるフラッシュカードアプリ" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#7F77DD" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="韓国語学習" />
+  <style>
+    :root {
+      --purple: #7F77DD;
+      --purple-dark: #534AB7;
+      --purple-light: #EEEDFE;
+      --purple-mid: #AFA9EC;
+      --text: #1a1a2e;
+      --text-secondary: #555;
+      --text-tertiary: #999;
+      --bg: #ffffff;
+      --bg-secondary: #f5f5f7;
+      --border: #e0e0e0;
+      --green-bg: #E1F5EE;
+      --green-text: #0F6E56;
+      --red-bg: #FAECE7;
+      --red-text: #993C1D;
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --text: #f0f0f0;
+        --text-secondary: #aaa;
+        --text-tertiary: #666;
+        --bg: #121212;
+        --bg-secondary: #1e1e1e;
+        --border: #2e2e2e;
+        --purple-light: #2a2660;
+        --green-bg: #0d2e22;
+        --green-text: #4ecca3;
+        --red-bg: #2e1408;
+        --red-text: #f4a57a;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overscroll-behavior: none; }
+
+    .app { max-width: 480px; margin: 0 auto; padding: 20px 16px env(safe-area-inset-bottom, 16px); }
+
+    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-top: env(safe-area-inset-top, 0); }
+    header h1 { font-size: 18px; font-weight: 600; color: var(--text); }
+    .header-icon { font-size: 22px; }
+
+    .controls { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .cat-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg); color: var(--text-secondary); font-size: 13px; cursor: pointer; transition: all 0.15s; }
+    .cat-btn.active { background: var(--purple-light); border-color: var(--purple); color: var(--purple-dark); font-weight: 600; }
+
+    .progress-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+    .progress-bar { flex: 1; height: 4px; background: var(--bg-secondary); border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--purple); border-radius: 2px; transition: width 0.3s; }
+    .progress-text { font-size: 12px; color: var(--text-tertiary); min-width: 44px; text-align: right; }
+
+    .voice-notice { font-size: 12px; color: var(--text-tertiary); background: var(--bg-secondary); border-radius: var(--radius-sm); padding: 8px 12px; margin-bottom: 14px; text-align: center; }
+
+    /* Card flip */
+    .card-wrap { perspective: 1000px; height: 280px; margin-bottom: 16px; cursor: pointer; user-select: none; }
+    .card-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.45s ease; }
+    .card-inner.flipped { transform: rotateY(180deg); }
+    .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: var(--radius); border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 20px; }
+    .card-front { background: var(--bg); }
+    .card-back { background: var(--purple-light); transform: rotateY(180deg); }
+
+    .card-hint { font-size: 11px; color: var(--text-tertiary); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+    .card-word { font-size: 44px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+    .card-en { font-size: 18px; color: var(--text-secondary); }
+    .card-ex-preview { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 12px; width: 100%; text-align: center; font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+
+    .card-back .card-word { font-size: 34px; color: var(--purple-dark); }
+    .card-back .card-rom { font-size: 15px; color: var(--purple); margin-top: 4px; }
+    .card-back .card-en { font-size: 14px; color: var(--purple); margin-top: 2px; }
+
+    .speak-btn { margin-top: 10px; display: flex; align-items: center; gap: 6px; padding: 6px 16px; border-radius: 20px; border: 1px solid var(--purple-mid); background: transparent; color: var(--purple-dark); font-size: 13px; cursor: pointer; }
+    .speak-btn:active { background: var(--purple-mid); }
+    .speak-btn.speaking { background: var(--purple); color: #fff; border-color: var(--purple); }
+
+    .example-box { margin-top: 10px; border-top: 1px solid var(--purple-mid); padding-top: 10px; width: 100%; text-align: center; }
+    .ex-ko { font-size: 14px; color: var(--purple-dark); font-weight: 500; line-height: 1.5; }
+    .ex-rom { font-size: 12px; color: var(--purple); margin-top: 3px; }
+    .ex-ja { font-size: 12px; color: var(--purple); margin-top: 2px; }
+    .ex-speak-btn { margin-top: 6px; display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: 20px; border: 1px solid var(--purple-mid); background: transparent; color: var(--purple); font-size: 12px; cursor: pointer; }
+    .ex-speak-btn:active { background: var(--purple-mid); }
+
+    .score-row { display: flex; gap: 10px; margin-bottom: 14px; }
+    .score-btn { flex: 1; padding: 12px 0; border-radius: var(--radius-sm); border: none; font-size: 15px; font-weight: 500; cursor: pointer; transition: opacity 0.15s; }
+    .score-btn:active { opacity: 0.75; }
+    .btn-ok { background: var(--green-bg); color: var(--green-text); }
+    .btn-hard { background: var(--red-bg); color: var(--red-text); }
+
+    .nav { display: flex; gap: 10px; margin-bottom: 20px; }
+    .nav button { flex: 1; padding: 12px 0; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .nav button:active { background: var(--bg-secondary); }
+    .nav button.primary { background: var(--purple); border-color: var(--purple); color: #fff; font-weight: 500; }
+    .nav button.primary:active { background: var(--purple-dark); }
+
+    .stats { display: flex; gap: 10px; }
+    .stat-card { flex: 1; background: var(--bg-secondary); border-radius: var(--radius-sm); padding: 12px; text-align: center; }
+    .stat-num { font-size: 24px; font-weight: 600; color: var(--text); }
+    .stat-label { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>🇰🇷 韓国語フラッシュカード</h1>
+  </header>
+
+  <div class="controls" id="catBtns"></div>
+  <div class="voice-notice" id="voiceNotice">🔊 音声を読み込み中...</div>
+  <div class="progress-row">
+    <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
+    <span class="progress-text" id="progText"></span>
+  </div>
+
+  <div class="card-wrap" id="cardWrap" onclick="flipCard()">
+    <div class="card-inner" id="cardInner">
+      <div class="card-face card-front">
+        <div class="card-hint">タップして裏返す</div>
+        <div class="card-word" id="frontWord"></div>
+        <div class="card-en" id="frontEn"></div>
+        <div class="card-ex-preview" id="frontEx"></div>
+      </div>
+      <div class="card-face card-back">
+        <div class="card-hint">韓国語</div>
+        <div class="card-word" id="backWord"></div>
+        <div class="card-rom" id="backRom"></div>
+        <div class="card-en" id="backEn"></div>
+        <button class="speak-btn" id="speakWordBtn" onclick="event.stopPropagation(); speakKorean('word')">🔊 単語を聞く</button>
+        <div class="example-box">
+          <div class="ex-ko" id="exKo"></div>
+          <div class="ex-rom" id="exRom"></div>
+          <div class="ex-ja" id="exJa"></div>
+          <button class="ex-speak-btn" onclick="event.stopPropagation(); speakKorean('example')">🔊 例文を聞く</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="score-row" id="scoreRow" style="display:none;">
+    <button class="score-btn btn-ok" onclick="markCard(true)">✓ 覚えた！</button>
+    <button class="score-btn btn-hard" onclick="markCard(false)">↩ もう一度</button>
+  </div>
+  <div class="nav" id="navRow">
+    <button onclick="prevCard()">← 前へ</button>
+    <button class="primary" onclick="nextCard()">次へ →</button>
+  </div>
+  <div class="stats">
+    <div class="stat-card"><div class="stat-num" id="statOk">0</div><div class="stat-label">覚えた</div></div>
+    <div class="stat-card"><div class="stat-num" id="statHard">0</div><div class="stat-label">要復習</div></div>
+    <div class="stat-card"><div class="stat-num" id="statLeft">0</div><div class="stat-label">残り</div></div>
+  </div>
+</div>
+
+<script>
+const WORDS = {
+  "挨拶": [
+    { ja:"こんにちは", en:"Hello", ko:"안녕하세요", rom:"annyeonghaseyo", ex:{ ko:"안녕하세요! 만나서 반가워요.", rom:"Annyeonghaseyo! Mannaseo bangawoyo.", ja:"こんにちは！会えて嬉しいです。" } },
+    { ja:"ありがとう", en:"Thank you", ko:"감사합니다", rom:"gamsahamnida", ex:{ ko:"도와줘서 감사합니다.", rom:"Dowajwoseo gamsahamnida.", ja:"助けてくれてありがとう。" } },
+    { ja:"すみません", en:"Excuse me", ko:"실례합니다", rom:"sillyehamnida", ex:{ ko:"실례합니다, 화장실이 어디예요?", rom:"Sillyehamnida, hwajangsiri eodiyeyo?", ja:"すみません、トイレはどこですか？" } },
+    { ja:"はい", en:"Yes", ko:"네", rom:"ne", ex:{ ko:"네, 알겠습니다.", rom:"Ne, algetsseumnida.", ja:"はい、わかりました。" } },
+    { ja:"いいえ", en:"No", ko:"아니요", rom:"aniyo", ex:{ ko:"아니요, 괜찮아요.", rom:"Aniyo, gwaenchanayo.", ja:"いいえ、大丈夫です。" } },
+    { ja:"さようなら", en:"Goodbye", ko:"안녕히 가세요", rom:"annyeonghi gaseyo", ex:{ ko:"내일 봐요. 안녕히 가세요!", rom:"Naeil bwayo. Annyeonghi gaseyo!", ja:"また明日。さようなら！" } },
+  ],
+  "数字": [
+    { ja:"一", en:"One", ko:"일", rom:"il", ex:{ ko:"일 층에 카페가 있어요.", rom:"Il cheunge kapega isseoyo.", ja:"1階にカフェがあります。" } },
+    { ja:"二", en:"Two", ko:"이", rom:"i", ex:{ ko:"이 번 버스를 타세요.", rom:"I beon beoseureul taseyo.", ja:"2番のバスに乗ってください。" } },
+    { ja:"三", en:"Three", ko:"삼", rom:"sam", ex:{ ko:"삼 분만 기다려 주세요.", rom:"Sam bunman gidaryeo juseyo.", ja:"3分だけ待ってください。" } },
+    { ja:"五", en:"Five", ko:"오", rom:"o", ex:{ ko:"오 시에 만나요.", rom:"O sie mannayo.", ja:"5時に会いましょう。" } },
+    { ja:"十", en:"Ten", ko:"십", rom:"sip", ex:{ ko:"십 분 후에 도착해요.", rom:"Sip bun hue dochakaehaeyo.", ja:"10分後に到着します。" } },
+    { ja:"百", en:"Hundred", ko:"백", rom:"baek", ex:{ ko:"백 원이에요.", rom:"Baek woniyeyo.", ja:"100ウォンです。" } },
+  ],
+  "日常": [
+    { ja:"水", en:"Water", ko:"물", rom:"mul", ex:{ ko:"물 한 잔 주세요.", rom:"Mul han jan juseyo.", ja:"水を一杯ください。" } },
+    { ja:"食べ物", en:"Food", ko:"음식", rom:"eumsik", ex:{ ko:"한국 음식을 좋아해요.", rom:"Hanguk eumsigeul joahaeyo.", ja:"韓国料理が好きです。" } },
+    { ja:"友達", en:"Friend", ko:"친구", rom:"chingu", ex:{ ko:"친구랑 영화를 봤어요.", rom:"Chingurang yeonghwareul bwasseoyo.", ja:"友達と映画を見ました。" } },
+    { ja:"学校", en:"School", ko:"학교", rom:"hakgyo", ex:{ ko:"학교에 걸어서 가요.", rom:"Hakgyoe georeoseo gayo.", ja:"学校に歩いて行きます。" } },
+    { ja:"今日", en:"Today", ko:"오늘", rom:"oneul", ex:{ ko:"오늘 날씨가 좋아요.", rom:"Oneul nalssiga joayo.", ja:"今日は天気がいいです。" } },
+    { ja:"明日", en:"Tomorrow", ko:"내일", rom:"naeil", ex:{ ko:"내일 같이 밥 먹어요.", rom:"Naeil gachi bap meogeoyo.", ja:"明日一緒にご飯食べましょう。" } },
+  ],
+  "形容詞": [
+    { ja:"大きい", en:"Big", ko:"크다", rom:"keuda", ex:{ ko:"이 가방은 너무 커요.", rom:"I gabangeun neomu keoyo.", ja:"このバッグは大きすぎます。" } },
+    { ja:"かわいい", en:"Cute", ko:"귀엽다", rom:"gwiyeopda", ex:{ ko:"강아지가 너무 귀여워요!", rom:"Gangajiga neomu gwiyeowoyo!", ja:"子犬がとてもかわいいです！" } },
+    { ja:"おいしい", en:"Delicious", ko:"맛있다", rom:"masitda", ex:{ ko:"이 김치찌개 정말 맛있어요!", rom:"I gimchijjigae jeongmal massisseoyo!", ja:"このキムチチゲ、本当においしいです！" } },
+    { ja:"楽しい", en:"Fun", ko:"즐겁다", rom:"jeulgeobda", ex:{ ko:"한국어 공부가 즐거워요.", rom:"Hangugeojj gongbuga jeulgeowoyo.", ja:"韓国語の勉強が楽しいです。" } },
+    { ja:"小さい", en:"Small", ko:"작다", rom:"jakda", ex:{ ko:"이 방은 조금 작아요.", rom:"I bangeun jogeum jagayo.", ja:"この部屋は少し小さいです。" } },
+  ],
+};
+
+const CATS = Object.keys(WORDS);
+let activeCat = CATS[0], deck = [], idx = 0, flipped = false, okCount = 0, hardCount = 0;
+let koVoice = null;
+
+function initVoices() {
+  const voices = window.speechSynthesis.getVoices();
+  koVoice = voices.find(v => v.lang.startsWith("ko")) || null;
+  const notice = document.getElementById("voiceNotice");
+  if (koVoice) {
+    notice.textContent = "🔊 音声OK: " + koVoice.name;
+    notice.style.color = "#0F6E56";
+  } else {
+    notice.textContent = "⚠️ 韓国語音声が見つかりません。ローマ字で確認してください。";
+  }
+}
+window.speechSynthesis.onvoiceschanged = initVoices;
+initVoices();
+
+function speakKorean(type) {
+  if (!koVoice) return;
+  const w = deck[idx % deck.length];
+  const text = type === "word" ? w.ko : w.ex.ko;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.voice = koVoice; utt.lang = "ko-KR"; utt.rate = 0.85;
+  const btn = document.getElementById("speakWordBtn");
+  if (type === "word") { btn.classList.add("speaking"); utt.onend = () => btn.classList.remove("speaking"); }
+  window.speechSynthesis.speak(utt);
+}
+
+function buildDeck(cat) {
+  deck = [...WORDS[cat]]; idx = 0; okCount = 0; hardCount = 0; flipped = false;
+  document.getElementById("cardInner").classList.remove("flipped");
+  document.getElementById("scoreRow").style.display = "none";
+  document.getElementById("navRow").style.display = "";
+  updateCard(); updateStats();
+}
+
+function updateCard() {
+  const w = deck[idx % deck.length];
+  document.getElementById("frontWord").textContent = w.ja;
+  document.getElementById("frontEn").textContent = w.en;
+  document.getElementById("frontEx").textContent = w.ex.ja;
+  document.getElementById("backWord").textContent = w.ko;
+  document.getElementById("backRom").textContent = w.rom;
+  document.getElementById("backEn").textContent = w.en;
+  document.getElementById("exKo").textContent = w.ex.ko;
+  document.getElementById("exRom").textContent = w.ex.rom;
+  document.getElementById("exJa").textContent = w.ex.ja;
+  const total = deck.length, cur = (idx % total) + 1;
+  document.getElementById("progFill").style.width = (cur / total * 100) + "%";
+  document.getElementById("progText").textContent = cur + " / " + total;
+  flipped = false;
+  document.getElementById("cardInner").classList.remove("flipped");
+  document.getElementById("scoreRow").style.display = "none";
+  document.getElementById("navRow").style.display = "";
+  document.getElementById("speakWordBtn").classList.remove("speaking");
+  window.speechSynthesis.cancel();
+}
+
+function flipCard() {
+  if (flipped) return; flipped = true;
+  document.getElementById("cardInner").classList.add("flipped");
+  document.getElementById("scoreRow").style.display = "";
+  document.getElementById("navRow").style.display = "none";
+  if (koVoice) speakKorean("word");
+}
+
+function markCard(ok) { if (ok) okCount++; else hardCount++; updateStats(); nextCard(); }
+function nextCard() { idx = (idx + 1) % deck.length; updateCard(); }
+function prevCard() { idx = (idx - 1 + deck.length) % deck.length; updateCard(); }
+
+function updateStats() {
+  document.getElementById("statOk").textContent = okCount;
+  document.getElementById("statHard").textContent = hardCount;
+  document.getElementById("statLeft").textContent = deck.length;
+}
+
+function buildCatBtns() {
+  const wrap = document.getElementById("catBtns"); wrap.innerHTML = "";
+  CATS.forEach(cat => {
+    const btn = document.createElement("button");
+    btn.className = "cat-btn" + (cat === activeCat ? " active" : "");
+    btn.textContent = cat;
+    btn.onclick = () => {
+      activeCat = cat;
+      document.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active"); buildDeck(cat);
+    };
+    wrap.appendChild(btn);
+  });
+}
+
+buildCatBtns(); buildDeck(activeCat);
+
+// PWA Service Worker登録
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+</body>
+</html>
