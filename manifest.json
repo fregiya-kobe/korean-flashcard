@@ -2,7 +2,7 @@
   "name": "韓国語フラッシュカード",
   "short_name": "韓国語学習",
   "description": "日本語・英語・韓国語を同時に学べるフラッシュカードアプリ",
-  "start_url": "/",
+  "start_url": "/korean-flashcard/"
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#7F77DD",
